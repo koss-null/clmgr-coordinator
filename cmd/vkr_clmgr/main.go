@@ -1,4 +1,4 @@
-package main
+package vkr_clmgr
 
 import (
 	"fmt"
