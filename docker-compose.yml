@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  node1:
+    build: ./
+    volumes:
+      - ./:/go/src/vkr-clmgr/
+    ports:
+      - 5001:80
+
+  node2:
+    build: ./
+    volumes:
+      - ./:/go/src/vkr-clmgr/
+    ports:
+      - 5002:80
+
+  node3:
+    build: ./
+    volumes:
+      - ./:/go/src/vkr-clmgr/
+    ports:
+      - 5003:80
+    depends_on:
+      - node2

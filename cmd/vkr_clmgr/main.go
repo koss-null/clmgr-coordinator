@@ -1,8 +1,8 @@
-package vkr_clmgr
+package main
 
 import (
 	"fmt"
-)
+	)
 
 func main() {
 	fmt.Println("Stub")
