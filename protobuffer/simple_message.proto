@@ -1,0 +1,15 @@
+syntax = "proto3";
+package simple_message;
+
+// services
+
+service Greeter {
+    rpc SayHello (Ping) returns (Ping) {}
+}
+
+// messages
+
+message Ping {
+    string query = 1;
+    int32 number = 2;
+}
