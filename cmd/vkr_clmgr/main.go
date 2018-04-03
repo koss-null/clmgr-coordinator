@@ -1,14 +1,9 @@
-package main
+package vkr_clmgr
 
 import (
-	"google.golang.org/grpc"
+	"../../pkg/connection"
 )
 
 func main() {
-	conn, _ := grpc.Dial("")
-	// if err != nil {
-	// 	...
-	// }
-	client := pb.NewRouteGuideClient(conn)
-	defer conn.Close()
+	connection.RunServer()
 }

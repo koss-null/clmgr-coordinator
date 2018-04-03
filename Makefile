@@ -1,11 +1,14 @@
 all:
-	go build
+	go build -I ./cmd/vkr_clmgr/
 
 proto:
 	./protobuf/compile-proto.sh
 
-test:
+compose:
 	docker-compose up
+
+compose-start: compose
+	docker-compose start
 
 clean-proto:
 	rm -rf ./protobuf/compiled/*
