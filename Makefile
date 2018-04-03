@@ -7,7 +7,9 @@ proto:
 test:
 	docker-compose up
 
-clean:
-	rm -rf ./build/*
+clean-proto:
 	rm -rf ./protobuf/compiled/*
+
+clean: clean-proto
+	rm -rf ./build/*
 	mkdir ./build/docker

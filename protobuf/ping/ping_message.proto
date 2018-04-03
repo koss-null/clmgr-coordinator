@@ -1,10 +1,10 @@
 syntax = "proto3";
-package simplemsg;
+package ping;
 
 // services
 
-service Greeter {
-    rpc SayHello (PingMessage) returns (PingMessage) {}
+service Pinger {
+    rpc GetPing (stream PingMessage) returns (stream PingMessage) {}
 }
 
 // messages
