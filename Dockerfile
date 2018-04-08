@@ -2,12 +2,12 @@ FROM opensuse
 
 RUN zypper in -y go go-doc
 
-RUN mkdir -p /go/src/vkr-clmgr
+RUN mkdir -p /go/src/clmgr-coordinator
 
-ENV GOPATH=/go/src/
+ENV GOPATH=/go/
 ENV PATH=$PATH+:/usr/bin/go
 
 WORKDIR /go/src/
-#COPY ./ /go/src/vkr-clmgr/
+COPY ./ /go/src/clmgr-coordinator/
 
-CMD ["go", "run", "./vkr-clmgr/cmd/vkr_clmgr/main.go"]
+CMD ["go", "run", "./clmgr-coordinator/main.go"]
