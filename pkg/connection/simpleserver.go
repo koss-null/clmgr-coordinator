@@ -5,8 +5,8 @@ import (
 	"io"
 	"net"
 
-	pb "../../protobuf/compiled/protobuf/ping"
-	. "../common"
+	. "myproj.com/clmgr-coordinator/pkg/common"
+	pb "myproj.com/clmgr-coordinator/protobuf/compiled/protobuf/ping"
 
 	"google.golang.org/grpc"
 )

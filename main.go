@@ -1,8 +1,8 @@
 package main
 
 import (
-	"./pkg/connection"
 	"fmt"
+	"myproj.com/clmgr-coordinator/pkg/connection"
 )
 
 func main() {

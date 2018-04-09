@@ -1,11 +1,15 @@
-all:
-	go build -o ./build/clmgr-coordinator -i ./
+all: build
+	./build/clmgr-coordinator
+
+build:
+	/bin/bash -c "GOOS=linux go build -o ./build/clmgr-coordinator -i ./"
 
 proto:
 	./protobuf/compile-proto.sh
 
 compose:
-	docker-compose up
+	docker-compose build
+	docker-compose start
 
 compose-start: compose
 	docker-compose start
