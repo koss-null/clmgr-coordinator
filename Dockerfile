@@ -1,5 +1,7 @@
 FROM opensuse
 
+ARG REQUIRED_ARGUMENT
+
 # getting out sourcecode
 ##############################
 RUN zypper in -y go go-doc && zypper in -y make
@@ -11,12 +13,13 @@ ENV GOROOT=/usr/lib64/go/1.9/
 ENV PATH=$PATH+:/usr/bin/go
 
 WORKDIR /go/src/myproj.com/clmgr-coordinator
-ADD ./ /go/src/myproj.com/clmgr-coordinator/
 ##############################
 
 # installing corosync
 ##############################
 
 ##############################
+
+ADD ./ /go/src/myproj.com/clmgr-coordinator/
 
 CMD ["make"]
