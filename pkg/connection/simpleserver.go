@@ -14,13 +14,13 @@ import (
 type simpleServer struct{}
 
 func RunServer() {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 2222))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", 2222))
 	if err != nil {
 		fmt.Printf("Can't run the server, %s\n", err.Error())
 	}
 	grpcServer := grpc.NewServer()
 	pb.RegisterPingerServer(grpcServer, &simpleServer{})
-	grpcServer.Serve(lis)
+	grpcServer.Serve(listener)
 }
 
 func (s *simpleServer) GetPing(stream pb.Pinger_GetPingServer) error {
