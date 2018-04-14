@@ -60,7 +60,8 @@ func (c *cliCommand) ParseCommand(word string) error {
 		}
 		return errors.New("there is no such option")
 	default:
-		trmWord := strings.ToLower(strings.TrimSuffix(word, "--"))
+		// trimming -- and \n
+		trmWord := word[2 : len(word)-1]
 		for _, cmd := range cliCommands {
 			if cmd.long != "" && trmWord == cmd.long {
 				c.ct, c.expArgs = cmd.ct, cmd.expArgs

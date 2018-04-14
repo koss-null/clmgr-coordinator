@@ -14,6 +14,16 @@ type (
 	}
 )
 
+func NewCLI() CLI {
+	return &commandLineInterface{}
+}
+
+// todo: remove this stub func asap
+func PerformCommand(command *cliCommand) error {
+	fmt.Printf("Performing command <stub>: %s\n", command.long)
+	return nil
+}
+
 func (cli *commandLineInterface) Start() (<-chan error, chan interface{}) {
 	errChan, done := make(chan error), make(chan interface{})
 	go func() {
