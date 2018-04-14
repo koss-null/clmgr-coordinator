@@ -9,7 +9,8 @@ import (
 type commandType uint
 
 const (
-	Help commandType = iota
+	None commandType = iota
+	Help
 	AddResource
 	RemoveResource
 	Info
@@ -61,7 +62,7 @@ func (c *cliCommand) ParseCommand(word string) error {
 		return errors.New("there is no such option")
 	default:
 		// trimming -- and \n
-		trmWord := word[2 : len(word)-1]
+		trmWord := word[2:]
 		for _, cmd := range cliCommands {
 			if cmd.long != "" && trmWord == cmd.long {
 				c.ct, c.expArgs = cmd.ct, cmd.expArgs
@@ -77,6 +78,9 @@ func (c *cliCommand) ParseCommand(word string) error {
 	to cliCommand gotArgs slice
 */
 func (c *cliCommand) ParseArg(word string) error {
+	if c.ct == None {
+		return errors.New("there isn't an option for this argument")
+	}
 	if strings.Contains(c.expArgs, "...") {
 		// todo: implement support of multiple args
 		return errors.New("sorry, multiple arguments are not implemented yet")
@@ -101,17 +105,21 @@ func (c *cliCommand) ParseArg(word string) error {
 			return err
 		}
 		c.gotArgs = append(c.gotArgs, s)
+	case "":
+		return errors.New("argument wasn't expected for this command")
 	}
 	return nil
 }
 
 func parseCommand(s string) ([]*cliCommand, error) {
 	parsed := make([]*cliCommand, 0, 3)
+	cmd := &cliCommand{}
 	for _, word := range strings.Split(s, " ") {
 		var err error
-		cmd := &cliCommand{}
 
 		if word[0] == '-' {
+			parsed = append(parsed, cmd)
+			cmd = &cliCommand{}
 			err = cmd.ParseCommand(word)
 		} else {
 			err = cmd.ParseArg(word)
@@ -119,8 +127,6 @@ func parseCommand(s string) ([]*cliCommand, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		parsed = append(parsed, cmd)
 	}
 	return parsed, nil
 }

@@ -28,6 +28,7 @@ func (cli *commandLineInterface) Start() (<-chan error, chan interface{}) {
 	errChan, done := make(chan error), make(chan interface{})
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
+		fmt.Println("ClusterManager CLI started\nTo exit press ctrl+c")
 		for {
 			select {
 			case <-done:
@@ -38,9 +39,14 @@ func (cli *commandLineInterface) Start() (<-chan error, chan interface{}) {
 					fmt.Printf(string(inputErr), err.Error())
 					continue
 				}
+				// removing "\n"
+				line = line[:len(line)-1]
+				if len(line) == 0 {
+					continue
+				}
 				commands, err := parseCommand(line)
 				if err != nil {
-					fmt.Printf(err.Error())
+					fmt.Println(err.Error())
 					continue
 				}
 				// todo: implement command performer
