@@ -111,10 +111,10 @@ func (c *cliCommand) ParseArg(word string) error {
 	return nil
 }
 
-func parseCommand(s string) ([]*cliCommand, error) {
+func parseCommandList(args []string) ([]*cliCommand, error) {
 	parsed := make([]*cliCommand, 0, 3)
 	cmd := &cliCommand{}
-	for _, word := range strings.Split(s, " ") {
+	for _, word := range args {
 		var err error
 
 		if word[0] == '-' {
@@ -129,4 +129,8 @@ func parseCommand(s string) ([]*cliCommand, error) {
 		}
 	}
 	return parsed, nil
+}
+
+func parseCommandLine(s string) ([]*cliCommand, error) {
+	return parseCommandList(strings.Split(s, " "))
 }

@@ -11,6 +11,7 @@ type (
 
 	CLI interface {
 		Start() (<-chan error, chan interface{})
+		Exec([]string) error
 	}
 )
 
@@ -44,7 +45,7 @@ func (cli *commandLineInterface) Start() (<-chan error, chan interface{}) {
 				if len(line) == 0 {
 					continue
 				}
-				commands, err := parseCommand(line)
+				commands, err := parseCommandLine(line)
 				if err != nil {
 					fmt.Println(err.Error())
 					continue
@@ -54,6 +55,7 @@ func (cli *commandLineInterface) Start() (<-chan error, chan interface{}) {
 					err := PerformCommand(commands[i])
 					if err != nil {
 						errChan <- err
+						close(done)
 					}
 				}
 			}
@@ -61,4 +63,17 @@ func (cli *commandLineInterface) Start() (<-chan error, chan interface{}) {
 	}()
 
 	return errChan, done
+}
+
+func (cli *commandLineInterface) Exec(args []string) error {
+	commands, err := parseCommandList(args)
+	if err != nil {
+		return err
+	}
+	for i := range commands {
+		err := PerformCommand(commands[i])
+		if err != nil {
+			return err
+		}
+	}
 }
