@@ -14,6 +14,7 @@ const (
 	AddResource
 	RemoveResource
 	Info
+	Exit
 )
 
 /*
@@ -43,7 +44,8 @@ func newCliCommandRegistry() []cliCommand {
 		{ct: Help, long: "help", short: 'h'},
 		{ct: AddResource, long: "add", expArgs: "%s"},
 		{ct: RemoveResource, long: "remove", expArgs: "%s"},
-		{ct: Info, long: "info", short: 'i'}}
+		{ct: Info, long: "info", short: 'i'},
+		{ct: Exit, long: "exit"}}
 }
 
 var cliCommands = newCliCommandRegistry()
@@ -55,7 +57,7 @@ func (c *cliCommand) ParseCommand(word string) error {
 	case 2:
 		for _, cmd := range cliCommands {
 			if cmd.short != 0 && word[1] == cmd.short {
-				c.ct, c.expArgs = cmd.ct, cmd.expArgs
+				c.ct, c.expArgs, c.long = cmd.ct, cmd.expArgs, cmd.long
 				return nil
 			}
 		}
@@ -65,7 +67,7 @@ func (c *cliCommand) ParseCommand(word string) error {
 		trmWord := word[2:]
 		for _, cmd := range cliCommands {
 			if cmd.long != "" && trmWord == cmd.long {
-				c.ct, c.expArgs = cmd.ct, cmd.expArgs
+				c.ct, c.expArgs, c.long = cmd.ct, cmd.expArgs, cmd.long
 				return nil
 			}
 		}
@@ -113,13 +115,12 @@ func (c *cliCommand) ParseArg(word string) error {
 
 func parseCommandList(args []string) ([]*cliCommand, error) {
 	parsed := make([]*cliCommand, 0, 3)
-	cmd := &cliCommand{}
+	cmd := new(cliCommand)
 	for _, word := range args {
 		var err error
 
 		if word[0] == '-' {
 			parsed = append(parsed, cmd)
-			cmd = &cliCommand{}
 			err = cmd.ParseCommand(word)
 		} else {
 			err = cmd.ParseArg(word)

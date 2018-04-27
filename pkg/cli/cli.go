@@ -20,8 +20,12 @@ func NewCLI() CLI {
 }
 
 // todo: remove this stub func asap
-func PerformCommand(command *cliCommand) error {
-	fmt.Printf("Performing command <stub>: %s\n", command.long)
+func PerformCommand(cmd *cliCommand, done chan interface{}) error {
+	fmt.Printf("Performing command <stub>: %s\n", cmd.long)
+	if cmd.ct == Exit {
+		close(done)
+		return nil
+	}
 	return nil
 }
 
@@ -29,7 +33,7 @@ func (cli *commandLineInterface) Start() (<-chan error, chan interface{}) {
 	errChan, done := make(chan error), make(chan interface{})
 	go func() {
 		reader := bufio.NewReader(os.Stdin)
-		fmt.Println("ClusterManager CLI started\nTo exit press ctrl+c")
+		fmt.Println("ClusterManager CLI started\nTo exit press ctrl+c or type '--exit'")
 		for {
 			select {
 			case <-done:
@@ -52,7 +56,7 @@ func (cli *commandLineInterface) Start() (<-chan error, chan interface{}) {
 				}
 				// todo: implement command performer
 				for i := range commands {
-					err := PerformCommand(commands[i])
+					err := PerformCommand(commands[i], done)
 					if err != nil {
 						errChan <- err
 						close(done)
@@ -71,9 +75,10 @@ func (cli *commandLineInterface) Exec(args []string) error {
 		return err
 	}
 	for i := range commands {
-		err := PerformCommand(commands[i])
+		err := PerformCommand(commands[i], make(chan interface{}))
 		if err != nil {
 			return err
 		}
 	}
+	return nil
 }

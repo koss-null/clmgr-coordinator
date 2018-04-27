@@ -4,6 +4,9 @@ all: build
 build:
 	/bin/bash -c "GOOS=linux go build -o ./build/clmgr-coordinator -i ./"
 
+build-local:
+	/bin/bash -c "go build -o ./build/clmgr-coordinator-l -i ./"
+
 proto:
 	./protobuf/compile-proto.sh
 
