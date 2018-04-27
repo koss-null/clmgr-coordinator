@@ -2,18 +2,17 @@ package main
 
 import (
 	"flag"
-
 	"fmt"
+
 	"myproj.com/clmgr-coordinator/pkg/cli"
+	"myproj.com/clmgr-coordinator/pkg/cluster"
+	. "myproj.com/clmgr-coordinator/pkg/common"
 	"os"
 )
 
-func main() {
+func startCLI(exit chan interface{}) {
 	flag.Parse()
 	args := flag.Args()
-	// todo: we do need some fixes here to make main as easy to read as possible
-
-	fmt.Println("Starting clmgr-coordinator")
 
 	if len(args) > 0 {
 		c := cli.NewCLI()
@@ -26,7 +25,8 @@ func main() {
 					close(control)
 				case <-control:
 					fmt.Println("CLI if going off")
-					os.Exit(0)
+					close(exit)
+					return
 				}
 			}
 		} else {
@@ -36,4 +36,29 @@ func main() {
 			}
 		}
 	}
+}
+
+func startCluster(exit chan interface{}) {
+	cl := cluster.New()
+	errChan := make(chan error)
+	go cl.Start(errChan)
+
+	err := <-errChan
+	fmt.Println(err)
+	close(exit)
+}
+
+func main() {
+	err := InitLogger()
+	if err != nil {
+		fmt.Printf("Can't initialise the logger. err: %s\n", err.Error())
+		os.Exit(0)
+	}
+
+	exit := make(chan interface{})
+	go startCluster(exit)
+	go startCLI(exit)
+
+	<-exit
+	Logger.Info("Finishing...")
 }

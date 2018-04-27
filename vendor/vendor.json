@@ -15,11 +15,17 @@
 			"revisionTime": "2018-02-02T18:43:18Z"
 		},
 		{
+			"checksumSHA1": "BoXdUBWB8UnSlFlbnuTQaPqfCGk=",
+			"path": "github.com/op/go-logging",
+			"revision": "970db520ece77730c7e4724c61121037378659d9",
+			"revisionTime": "2016-03-15T20:05:05Z"
+		},
+		{
 			"checksumSHA1": "XVPdTlWEbXdQKkBYias5jhjUudQ=",
 			"path": "google.golang.org/grpc",
 			"revision": "bdb0727fa72e9f94e0b23df2b8c17561956811cd",
 			"revisionTime": "2018-03-22T16:33:38Z"
 		}
 	],
-	"rootPath": "clmgr-coordinator"
+	"rootPath": "myproj.com/clmgr-coordinator"
 }

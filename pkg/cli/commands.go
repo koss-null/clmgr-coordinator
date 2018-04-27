@@ -35,6 +35,7 @@ type cliCommand struct {
 	short   uint8
 	long    string
 	expArgs string
+	next    []cliCommand
 	// forbidden to declare on creation
 	gotArgs []interface{}
 }
