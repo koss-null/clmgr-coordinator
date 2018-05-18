@@ -1,0 +1,36 @@
+syntax = "proto3";
+package operations_prt;
+
+message Operation2Perform {
+    string uuid = 1;
+
+    enum OperationType {
+        START = 0;
+        STOP = 1;
+        MONITOR = 2;
+        NOTIFY = 3;
+        RELOAD = 4;
+        PROMOTE = 5;
+        DEMOTE = 6;
+        METADATA = 7;
+    }
+    OperationType opType = 2;
+}
+
+message OperationResult {
+    string uuid = 1;
+
+    string error = 2;
+    bytes metha = 3;
+
+    enum OperationState {
+        OP_OK = 0;
+        OP_FAILED = 1;
+        OP_IN_PROGRESS = 2;
+    }
+    OperationState opState = 4;
+}
+
+service AgentOperationPerformer {
+    rpc Perform(stream Operation2Perform) returns (stream OperationResult) {}
+}
