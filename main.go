@@ -4,9 +4,12 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/google/logger"
+	"myproj.com/clmgr-coordinator/config"
 	"myproj.com/clmgr-coordinator/pkg/cli"
 	"myproj.com/clmgr-coordinator/pkg/cluster"
-	. "myproj.com/clmgr-coordinator/pkg/common"
+	"myproj.com/clmgr-coordinator/pkg/common"
+	"myproj.com/clmgr-coordinator/pkg/rest"
 	"os"
 )
 
@@ -49,16 +52,18 @@ func startCluster(exit chan interface{}) {
 }
 
 func main() {
-	err := InitLogger()
-	if err != nil {
-		fmt.Printf("Can't initialise the logger. err: %s\n", err.Error())
-		os.Exit(0)
+	config.InitConfig()
+	if err := common.InitLogger(); err != nil {
+		fmt.Println("can't init logger")
+		os.Exit(-1)
 	}
 
 	exit := make(chan interface{})
 	go startCluster(exit)
 	go startCLI(exit)
+	clnt := rest.NewClient()
+	clnt.Start()
 
 	<-exit
-	Logger.Info("Finishing...")
+	logger.Info("Finishing...")
 }

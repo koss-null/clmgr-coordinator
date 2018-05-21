@@ -1,0 +1,5 @@
+AgentPath = "../../test/gents"
+ResourcesPath = "../../test/resources"
+LogPath = "../../config/debug/log.log"
+LogCoordPath = "../../config/debug/log.log"
+CoordinatorAddress = "127.0.0.1:5674"

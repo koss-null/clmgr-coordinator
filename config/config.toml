@@ -1,0 +1,5 @@
+AgentPath = "/opt/clmgr/agents"
+ResourcesPath = "/opt/clmgr/resources"
+LogPath = "/var/log/cluster-manager.log"
+LogCoordPath = "/var/log/cluster-manager-coord.log"
+CoordinatorAddress = "127.0.0.1:5674"
