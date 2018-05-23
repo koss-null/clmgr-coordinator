@@ -58,11 +58,12 @@ func main() {
 		os.Exit(-1)
 	}
 
+	clnt := rest.NewClient()
+	clnt.Start()
+
 	exit := make(chan interface{})
 	go startCluster(exit)
 	go startCLI(exit)
-	clnt := rest.NewClient()
-	clnt.Start()
 
 	<-exit
 	logger.Info("Finishing...")

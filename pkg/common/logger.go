@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/google/logger"
+	. "myproj.com/clmgr-coordinator/config"
 	"os"
 )
 
