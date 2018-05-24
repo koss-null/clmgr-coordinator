@@ -30,6 +30,7 @@ func (*client) Start() error {
 	router.HandleFunc("/resource/{name}", ShowResource).Methods("GET")
 	router.HandleFunc("/resource/{name}/conf", ConfigureResource).Methods("POST")
 	router.HandleFunc("/resource/{name}", RemoveResource).Methods("DELETE")
+	router.HandleFunc("/cluster/conf", ConfigureCluster).Methods("POST")
 
 	defaultPort := strings.Split(config.Config.CoordinatorAddress, ":")[1]
 	logger.Infof("Start listener on port %s", defaultPort)
