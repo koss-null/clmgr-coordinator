@@ -9,7 +9,7 @@ import (
 
 func HostnameHandler(w http.ResponseWriter, _ *http.Request) {
 	logger.Info("handling hostname request")
-	hn := CreateHostname()
+	hn := GetHostname()
 	var s struct {
 		Hostname string `json:"hostname"`
 	}

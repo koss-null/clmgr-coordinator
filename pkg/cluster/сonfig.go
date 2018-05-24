@@ -44,3 +44,8 @@ type Config struct {
 	PlacementStrategy PlacementStrategyType `json:"placement-strategy"`
 	HealthStrategy    HealthStrategyType    `json:"health-strategy"`
 }
+
+func (c *Config) Check() bool {
+	// todo: implement
+	return true
+}

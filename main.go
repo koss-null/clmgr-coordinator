@@ -42,9 +42,8 @@ func startCLI(exit chan interface{}) {
 }
 
 func startCluster(exit chan interface{}) {
-	cl := cluster.New()
 	errChan := make(chan error)
-	go cl.Start(errChan)
+	go cluster.Current.Start(errChan)
 
 	err := <-errChan
 	fmt.Println(err)
@@ -65,6 +64,6 @@ func main() {
 	clnt := rest.NewClient()
 	clnt.Start()
 
-	<-exit
+	_ = <-exit
 	logger.Info("Finishing...")
 }
