@@ -26,8 +26,9 @@ func (*client) Start() error {
 	router.HandleFunc("/hostname", HostnameHandler).Methods("GET")
 	router.HandleFunc("/node/{hostname}/label", AddLabelHandler).Methods("POST")
 	router.HandleFunc("/resource", AddResource).Methods("POST")
+	router.HandleFunc("/resource/list", ShowResources).Methods("GET")
 	router.HandleFunc("/resource/{name}", ShowResource).Methods("GET")
-	router.HandleFunc("/resource/{name}", ConfigureResource).Methods("POST")
+	router.HandleFunc("/resource/{name}/conf", ConfigureResource).Methods("POST")
 	router.HandleFunc("/resource/{name}", RemoveResource).Methods("DELETE")
 
 	defaultPort := strings.Split(config.Config.CoordinatorAddress, ":")[1]

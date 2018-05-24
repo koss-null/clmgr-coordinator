@@ -22,9 +22,8 @@ func AddLabelHandler(w http.ResponseWriter, r *http.Request) {
 		Labels []string `json:"labels,omitempty"`
 	}{}
 
-	var data []byte
-	r.Body.Read(data)
-	err := json.Unmarshal(data, &s)
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&s)
 	if err != nil {
 		http.Error(w, "Can't unmarshal labels", http.StatusInternalServerError)
 		return

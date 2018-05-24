@@ -18,14 +18,15 @@ type (
 		Change(Resource) error
 		Get(string) Resource
 		Contains(string) bool
+		List() []interface{}
 	}
 )
 
-var LocalPool Pool
-var GlobalPool Pool
+var LocalPool = NewPool()
+var GlobalPool = NewPool()
 
 func NewPool() Pool {
-	return &pool{key: &sync.Mutex{}}
+	return &pool{key: &sync.Mutex{}, res: make(map[string]Resource)}
 }
 
 func (p *pool) Add(res Resource) error {
@@ -75,4 +76,12 @@ func (p *pool) Get(res string) Resource {
 func (p *pool) Contains(res string) bool {
 	_, ok := p.res[res]
 	return ok
+}
+
+func (p *pool) List() []interface{} {
+	l := make([]interface{}, len(p.res))
+	for key := range p.res {
+		l = append(l, key)
+	}
+	return l
 }
