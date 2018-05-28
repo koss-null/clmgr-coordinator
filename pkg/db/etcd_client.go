@@ -55,7 +55,7 @@ func initClient() error {
 
 func (c *dbclient) Set(key string, value string) error {
 	logger.Infof("Setting %s key with %s value", key, value)
-	resp, err := kvc.Put(context.Background(), key, value, nil)
+	resp, err := kvc.Put(context.Background(), key, value)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (c *dbclient) Set(key string, value string) error {
 
 func (c *dbclient) Get(key string) (map[string][]byte, error) {
 	logger.Infof("Getting %s key", key)
-	resp, err := kvc.Get(context.Background(), key, nil)
+	resp, err := kvc.Get(context.Background(), key)
 	if err != nil {
 		return map[string][]byte{}, err
 	}
@@ -74,7 +74,7 @@ func (c *dbclient) Get(key string) (map[string][]byte, error) {
 
 func (c *dbclient) Remove(key string) error {
 	logger.Infof("Removing etcd key %s", key)
-	_, err := kvc.Delete(context.Background(), key, nil)
+	_, err := kvc.Delete(context.Background(), key)
 	if err != nil {
 		return err
 	}
