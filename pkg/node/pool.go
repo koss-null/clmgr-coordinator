@@ -52,7 +52,7 @@ func (p *pool) Add(n Node, needDB bool) {
 	}
 	n.client = db.NewClient()
 	p.nodes = append(p.nodes, n)
-	logger.Infof("NODES %+v", p.nodes)
+	n.Watch()
 	if needDB {
 		curNodeKey := strings.Join([]string{ClmgrKey, "nodes", GetHostname()}, "/")
 		data, err := json.Marshal(n)

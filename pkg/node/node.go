@@ -19,7 +19,7 @@ func (n *Node) Watch() {
 	if n.client == nil {
 		n.client = db.NewClient()
 	}
-	watchClusterChan := n.client.Watch(strings.Join([]string{common.ClmgrKey, "nodes", n.Name}, "/"), nil)
+	watchClusterChan := n.client.Watch(strings.Join([]string{common.ClmgrKey, "nodes", n.Name}, "/"))
 
 	// watching cluster config changes
 	go func() {

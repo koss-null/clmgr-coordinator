@@ -16,7 +16,7 @@ type (
 		Set(key string, value string) error
 		Get(key string) (map[string][]byte, error)
 		Remove(key string) error
-		Watch(key string, wo []clientv3.OpOption) clientv3.WatchChan
+		Watch(key string, wo ...clientv3.OpOption) clientv3.WatchChan
 	}
 )
 
@@ -98,6 +98,6 @@ type Response struct {
 	Value  string
 }
 
-func (c *dbclient) Watch(key string, wo []clientv3.OpOption) clientv3.WatchChan {
+func (c *dbclient) Watch(key string, wo ...clientv3.OpOption) clientv3.WatchChan {
 	return etcdClient.Watcher.Watch(context.Background(), key, wo...)
 }

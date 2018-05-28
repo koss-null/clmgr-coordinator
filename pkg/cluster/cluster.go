@@ -3,6 +3,7 @@ package cluster
 import (
 	"encoding/json"
 	"errors"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/google/logger"
 	. "myproj.com/clmgr-coordinator/pkg/common"
 	"myproj.com/clmgr-coordinator/pkg/db"
@@ -85,7 +86,7 @@ func (c *cluster) Start(errChan chan error) {
 	}
 
 	// watching cluster config changes
-	watchClusterChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, "config"}, "/"), nil)
+	watchClusterChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, "config"}, "/"))
 	go func() {
 		for r := range watchClusterChan {
 			logger.Infof("Got key changing %+v", r)
@@ -117,21 +118,21 @@ func (c *cluster) Start(errChan chan error) {
 			continue
 		}
 		c.nodePool.Add(n, false)
-		logger.Info("NODESSSS %+v", c.nodePool)
 	}
 
-	watchAllNodesChan := c.clnt.Watch(ClmgrKey+"/nodes", nil)
+	watchAllNodesChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, "nodes"}, "/"), clientv3.WithPrefix())
 	go func() {
 		for r := range watchAllNodesChan {
 			logger.Infof("Got node changing %+v", r)
 			for _, e := range r.Events {
 				if e.IsModify() {
 					c.nodePool.Change(string(e.Kv.Key), e.Kv.Value)
-				} else if e.IsCreate() {
-					n := node.Node{}
+				} else {
+					logger.Info("Cached node creating")
+					n := new(node.Node)
 					// todo: handle
-					_ = json.Unmarshal(e.Kv.Value, &n)
-					c.nodePool.Add(n, false)
+					_ = json.Unmarshal(e.Kv.Value, n)
+					c.nodePool.Add(*n, false)
 				}
 			}
 		}

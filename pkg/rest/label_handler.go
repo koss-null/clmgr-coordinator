@@ -37,13 +37,11 @@ func AddLabelHandler(w http.ResponseWriter, r *http.Request) {
 func ListNodes(w http.ResponseWriter, _ *http.Request) {
 	logger.Info("Linting nodes")
 
-	logger.Infof("NDS! %+v", cluster.Current.Nodes().Nodes())
 	data, err := json.Marshal(cluster.Current.Nodes().Nodes())
 	if err != nil {
 		http.Error(w, "Can't marshall nodes list "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	logger.Infof("DDATTA %s", string(data))
 	w.Write(data)
 	logger.Info("Nodes listing finished")
 }
