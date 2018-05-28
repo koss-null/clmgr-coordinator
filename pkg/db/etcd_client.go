@@ -65,7 +65,7 @@ func (c *dbclient) Set(key string, value string) error {
 
 func (c *dbclient) Get(key string) (map[string][]byte, error) {
 	logger.Infof("Getting %s key", key)
-	resp, err := kvc.Get(context.Background(), key)
+	resp, err := kvc.Get(context.Background(), key, clientv3.WithPrefix())
 	if err != nil {
 		return map[string][]byte{}, err
 	}

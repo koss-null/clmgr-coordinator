@@ -24,6 +24,7 @@ func (*client) Start() error {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/hostname", HostnameHandler).Methods("GET")
+	router.HandleFunc("/node", ListNodes).Methods("GET")
 	router.HandleFunc("/node/{hostname}/label", AddLabelHandler).Methods("POST")
 	router.HandleFunc("/resource", AddResource).Methods("POST")
 	router.HandleFunc("/resource/list", ShowResources).Methods("GET")

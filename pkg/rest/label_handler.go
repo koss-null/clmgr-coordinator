@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/google/logger"
 	"github.com/gorilla/mux"
+	"myproj.com/clmgr-coordinator/pkg/cluster"
 	"myproj.com/clmgr-coordinator/pkg/node"
 	"net/http"
 )
@@ -31,4 +32,18 @@ func AddLabelHandler(w http.ResponseWriter, r *http.Request) {
 
 	node.NodePool.AddLabel(hostname, s.Labels)
 	logger.Info("Labels was added")
+}
+
+func ListNodes(w http.ResponseWriter, _ *http.Request) {
+	logger.Info("Linting nodes")
+
+	logger.Infof("NDS! %+v", cluster.Current.Nodes().Nodes())
+	data, err := json.Marshal(cluster.Current.Nodes().Nodes())
+	if err != nil {
+		http.Error(w, "Can't marshall nodes list "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	logger.Infof("DDATTA %s", string(data))
+	w.Write(data)
+	logger.Info("Nodes listing finished")
 }

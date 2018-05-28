@@ -3,7 +3,6 @@ package cluster
 import (
 	"encoding/json"
 	"errors"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/google/logger"
 	. "myproj.com/clmgr-coordinator/pkg/common"
 	"myproj.com/clmgr-coordinator/pkg/db"
@@ -25,6 +24,7 @@ type (
 		AddConfig(*Config) error
 		Stop(chan error)
 		GetConfig() Config
+		Nodes() node.Pool
 	}
 )
 
@@ -39,13 +39,14 @@ func New() Cluster {
 	}
 }
 
+// todo: clean up this code
 func (c *cluster) Start(errChan chan error) {
 	logger.Info("Starting cluster")
 
 	// creating node only with hostname
 	c.nodePool.Add(node.Node{
 		Name: GetHostname(),
-	})
+	}, true)
 
 	c.clnt = db.NewClient()
 	result, err := c.clnt.Get(ClmgrKey)
@@ -100,30 +101,38 @@ func (c *cluster) Start(errChan chan error) {
 		}
 	}()
 
-	// watching current node changing
-	watchCurNodeChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, "nodes", GetHostname()}, "/"), nil)
-	go func() {
-		for r := range watchCurNodeChan {
-			logger.Infof("Got cur node changing %+v", r)
-			for _, e := range r.Events {
-				// todo: check if it's work, looks bad
-				if e.Type == mvccpb.DELETE {
-					logger.Info("This node was deleted from cluster")
-					close(errChan)
-					return
-				}
-			}
-		}
-	}()
-
 	// watching all node changing
+	nodeList, err := c.clnt.Get(strings.Join([]string{ClmgrKey, "nodes"}, "/"))
+	if err != nil {
+		logger.Error("err: %s", err.Error())
+		errChan <- err
+	}
+	for id, info := range nodeList {
+		logger.Infof("Adding %s with info %s", id, string(info))
+		n := node.Node{}
+		err = json.Unmarshal(info, &n)
+		if err != nil {
+			logger.Error("Unmarshal node error")
+			errChan <- err
+			continue
+		}
+		c.nodePool.Add(n, false)
+		logger.Info("NODESSSS %+v", c.nodePool)
+	}
+
 	watchAllNodesChan := c.clnt.Watch(ClmgrKey+"/nodes", nil)
 	go func() {
 		for r := range watchAllNodesChan {
 			logger.Infof("Got node changing %+v", r)
 			for _, e := range r.Events {
-				logger.Info("dffvgfgergreg")
-				logger.Info(string(e.Kv.Value))
+				if e.IsModify() {
+					c.nodePool.Change(string(e.Kv.Key), e.Kv.Value)
+				} else if e.IsCreate() {
+					n := node.Node{}
+					// todo: handle
+					_ = json.Unmarshal(e.Kv.Value, &n)
+					c.nodePool.Add(n, false)
+				}
 			}
 		}
 	}()
@@ -153,4 +162,8 @@ func (c *cluster) Stop(errChan chan error) {
 
 func (c *cluster) GetConfig() Config {
 	return c.config
+}
+
+func (c *cluster) Nodes() node.Pool {
+	return c.nodePool
 }

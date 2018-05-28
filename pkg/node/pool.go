@@ -17,11 +17,13 @@ type (
 	}
 
 	Pool interface {
-		Add(Node)
+		Add(Node, bool)
 		Remove(hostname string)
 		AddLabel(hostname string, labels []string)
 		GetLabels(hostname string) []string
+		Change(string, []byte) error
 		Contains(hostname string) bool
+		Nodes() []Node
 	}
 )
 
@@ -31,21 +33,35 @@ func NewPool() Pool {
 	return &pool{
 		&sync.Mutex{},
 		db.NewClient(),
-		make([]Node, 3),
+		make([]Node, 0, 3),
 	}
 }
 
-func (p *pool) Add(n Node) {
+func (p *pool) Add(n Node, needDB bool) {
 	p.key.Lock()
 	defer p.key.Unlock()
-	p.nodes = append(p.nodes, n)
-	curNodeKey := strings.Join([]string{ClmgrKey, "nodes", GetHostname()}, "/")
-	data, err := json.Marshal(n)
-	if err != nil {
-		logger.Errorf("Can't marshall node info")
+	logger.Info("Adding to node list")
+	if n.Name == "" {
 		return
 	}
-	p.etcd.Set(curNodeKey, string(data))
+	for _, nd := range p.nodes {
+		if nd.Name == n.Name {
+			logger.Info("Found node name as existing")
+			return
+		}
+	}
+	n.client = db.NewClient()
+	p.nodes = append(p.nodes, n)
+	logger.Infof("NODES %+v", p.nodes)
+	if needDB {
+		curNodeKey := strings.Join([]string{ClmgrKey, "nodes", GetHostname()}, "/")
+		data, err := json.Marshal(n)
+		if err != nil {
+			logger.Errorf("Can't marshall node info")
+			return
+		}
+		p.etcd.Set(curNodeKey, string(data))
+	}
 }
 
 func (p *pool) Remove(hostname string) {
@@ -97,6 +113,25 @@ func (p *pool) GetLabels(hostname string) []string {
 		}
 	}
 	return []string{}
+}
+
+func (p *pool) Change(hostname string, data []byte) error {
+	n := Node{}
+	err := json.Unmarshal(data, &n)
+	if err != nil {
+		return err
+	}
+	for i := range p.nodes {
+		if p.nodes[i].Name == n.Name {
+			p.nodes[i] = n
+			break
+		}
+	}
+	return nil
+}
+
+func (p *pool) Nodes() []Node {
+	return p.nodes
 }
 
 func (p *pool) Contains(hostname string) bool {
