@@ -22,7 +22,7 @@ func GetHostname() string {
 func KV2Map(data []*mvccpb.KeyValue) map[string][]byte {
 	res := make(map[string][]byte)
 	for i := range data {
-		res[string(data[i].Key)] = data[i].Key
+		res[string(data[i].Key)] = data[i].Value
 	}
 	return res
 }

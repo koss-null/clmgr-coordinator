@@ -39,7 +39,7 @@ func (p *pool) Add(n Node) {
 	p.key.Lock()
 	defer p.key.Unlock()
 	p.nodes = append(p.nodes, n)
-	curNodeKey := strings.Join([]string{ClmgrKey, GetHostname()}, "/")
+	curNodeKey := strings.Join([]string{ClmgrKey, "nodes", GetHostname()}, "/")
 	data, err := json.Marshal(n)
 	if err != nil {
 		logger.Errorf("Can't marshall node info")
@@ -52,7 +52,7 @@ func (p *pool) Remove(hostname string) {
 	for i := range p.nodes {
 		if p.nodes[i].Name == hostname {
 			p.nodes = append(p.nodes[0:i], p.nodes[i+1:]...)
-			curNodeKey := strings.Join([]string{ClmgrKey, p.nodes[i].Name}, "/")
+			curNodeKey := strings.Join([]string{ClmgrKey, "nodes", p.nodes[i].Name}, "/")
 			err := p.etcd.Remove(curNodeKey)
 			if err != nil {
 				logger.Errorf("Can't remove node, err %s", err.Error())

@@ -1,15 +1,15 @@
 package cluster
 
 import (
-	"github.com/google/logger"
-	"myproj.com/clmgr-coordinator/pkg/node"
-	"myproj.com/clmgr-coordinator/pkg/db"
-	"strings"
-	. "myproj.com/clmgr-coordinator/pkg/common"
-	"myproj.com/clmgr-coordinator/pkg/resource"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"encoding/json"
 	"errors"
+	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/google/logger"
+	. "myproj.com/clmgr-coordinator/pkg/common"
+	"myproj.com/clmgr-coordinator/pkg/db"
+	"myproj.com/clmgr-coordinator/pkg/node"
+	"myproj.com/clmgr-coordinator/pkg/resource"
+	"strings"
 )
 
 type (
@@ -55,26 +55,42 @@ func (c *cluster) Start(errChan chan error) {
 	}
 	logger.Infof("Got result %s", result)
 
-	data, err := json.Marshal(c.config)
+	// if config already set, not reset it
+	clConfig, err := c.clnt.Get(strings.Join([]string{ClmgrKey, "config"}, "/"))
 	if err != nil {
 		errChan <- err
 		return
 	}
-	err = c.clnt.Set(strings.Join([]string{ClmgrKey, "config"}, "/"), string(data))
-	if err != nil {
-		errChan <- err
-		return
+	if _, ok := clConfig["/cluster/config"]; !ok {
+		logger.Info("Didn't found existing config, creating the new one")
+		data, err := json.Marshal(c.config)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		err = c.clnt.Set(strings.Join([]string{ClmgrKey, "config"}, "/"), string(data))
+		if err != nil {
+			errChan <- err
+			return
+		}
+	} else {
+		logger.Info("Got existing cluster config. Setting it to myself")
+		data := clConfig["/cluster/config"]
+		logger.Info(string(data))
+		err := json.Unmarshal(data, &(c.config))
+		if err != nil {
+			errChan <- err
+		}
 	}
-
-	watchClusterChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, "config"}, "/"), nil)
 
 	// watching cluster config changes
+	watchClusterChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, "config"}, "/"), nil)
 	go func() {
 		for r := range watchClusterChan {
 			logger.Infof("Got key changing %+v", r)
 			for _, e := range r.Events {
 				if e.IsModify() || e.IsCreate() {
-					data = e.Kv.Value
+					data := e.Kv.Value
 					err := json.Unmarshal(data, &(c.config))
 					if err != nil {
 						errChan <- err
@@ -84,11 +100,11 @@ func (c *cluster) Start(errChan chan error) {
 		}
 	}()
 
-	watchChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, GetHostname()}, "/"), nil)
-	// watching nodes changing
+	// watching current node changing
+	watchCurNodeChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, "nodes", GetHostname()}, "/"), nil)
 	go func() {
-		for r := range watchChan {
-			logger.Infof("Got key changing %+v", r)
+		for r := range watchCurNodeChan {
+			logger.Infof("Got cur node changing %+v", r)
 			for _, e := range r.Events {
 				// todo: check if it's work, looks bad
 				if e.Type == mvccpb.DELETE {
@@ -96,6 +112,18 @@ func (c *cluster) Start(errChan chan error) {
 					close(errChan)
 					return
 				}
+			}
+		}
+	}()
+
+	// watching all node changing
+	watchAllNodesChan := c.clnt.Watch(ClmgrKey+"/nodes", nil)
+	go func() {
+		for r := range watchAllNodesChan {
+			logger.Infof("Got node changing %+v", r)
+			for _, e := range r.Events {
+				logger.Info("dffvgfgergreg")
+				logger.Info(string(e.Kv.Value))
 			}
 		}
 	}()

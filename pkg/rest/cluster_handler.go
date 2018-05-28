@@ -2,10 +2,10 @@ package rest
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/google/logger"
 	"myproj.com/clmgr-coordinator/pkg/cluster"
 	"net/http"
-	"fmt"
 )
 
 func ConfigureCluster(w http.ResponseWriter, r *http.Request) {
@@ -23,7 +23,6 @@ func ConfigureCluster(w http.ResponseWriter, r *http.Request) {
 	logger.Info("Cluster was successfully configured")
 }
 
-
 func ShowCluster(w http.ResponseWriter, _ *http.Request) {
 	logger.Info("handling show cluster request")
 
@@ -35,6 +34,5 @@ func ShowCluster(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	w.Write(data)
-	w.WriteHeader(http.StatusOK)
 	logger.Info("Cluster was successfully configured")
 }
