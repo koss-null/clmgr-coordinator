@@ -5,19 +5,36 @@ import (
 	"github.com/google/logger"
 	"myproj.com/clmgr-coordinator/pkg/cluster"
 	"net/http"
+	"fmt"
 )
 
 func ConfigureCluster(w http.ResponseWriter, r *http.Request) {
-	logger.Info("handling configure resource request")
+	logger.Info("handling configure cluster request")
 
 	conf := new(cluster.Config)
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(conf)
 	if !conf.Check() || err != nil {
-		http.Error(w, "Cluster info contains invalid data", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Cluster info contains invalid data, err: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
 	cluster.Current.AddConfig(conf)
+	w.WriteHeader(http.StatusOK)
+	logger.Info("Cluster was successfully configured")
+}
+
+
+func ShowCluster(w http.ResponseWriter, _ *http.Request) {
+	logger.Info("handling show cluster request")
+
+	conf := cluster.Current.GetConfig()
+	data, err := json.Marshal(conf)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Cluster info can't be marshaled, err: %s", err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	w.Write(data)
 	w.WriteHeader(http.StatusOK)
 	logger.Info("Cluster was successfully configured")
 }
