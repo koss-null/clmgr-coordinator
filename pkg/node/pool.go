@@ -3,10 +3,10 @@ package node
 import (
 	"encoding/json"
 	"github.com/google/logger"
-	. "myproj.com/clmgr-coordinator/pkg/common"
 	"myproj.com/clmgr-coordinator/pkg/db"
 	"strings"
 	"sync"
+	. "myproj.com/clmgr-coordinator/pkg/common"
 )
 
 type (
@@ -51,9 +51,8 @@ func (p *pool) Add(n Node, needDB bool) {
 		}
 	}
 	n.client = db.NewClient()
-	p.nodes = append(p.nodes, n)
-	n.Watch()
 	if needDB {
+		n.IP = GetIpFromETCD()
 		curNodeKey := strings.Join([]string{ClmgrKey, "nodes", GetHostname()}, "/")
 		data, err := json.Marshal(n)
 		if err != nil {
@@ -62,6 +61,8 @@ func (p *pool) Add(n Node, needDB bool) {
 		}
 		p.etcd.Set(curNodeKey, string(data))
 	}
+	p.nodes = append(p.nodes, n)
+	n.Watch()
 }
 
 func (p *pool) Remove(hostname string) {

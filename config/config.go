@@ -18,6 +18,7 @@ type config struct {
 	ResourcesPath      string
 	LogCoordPath       string
 	CoordinatorAddress string
+	HNPath             string
 }
 
 var Config config
