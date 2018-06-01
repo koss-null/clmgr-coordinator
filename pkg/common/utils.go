@@ -2,20 +2,29 @@ package common
 
 import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"github.com/satori/go.uuid"
+	"math/rand"
 	"myproj.com/clmgr-coordinator/config"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 var hostname string
 var once sync.Once
 
+var hostNames = []string{"Donkey", "Aardwolf", "Admiral", "Vanessa", "Adouri", "Limnocorax", "Snycerus", "Paraxerus",
+	"Aonyx", "Anhinga", "Panthera", "Owl", "Mabuya"}
+var hostPrefixes = []string{"Big", "Little", "Fancy", "Silly", "Funny", "Huge", "Dancing", "Suspicious"}
+
 func GetHostname() string {
 	if hostname == "" {
 		once.Do(func() {
-			id, _ := uuid.NewV1()
-			hostname = id.String()
+			r := rand.New(rand.NewSource(time.Now().UnixNano()))
+			prefix := r.Intn(len(hostPrefixes))
+			name := r.Intn(len(hostNames))
+			id := r.Intn(1024000)
+			hostname = strings.Join([]string{hostPrefixes[prefix], hostNames[name], strconv.Itoa(id)}, "-")
 		})
 	}
 	return hostname
