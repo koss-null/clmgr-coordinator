@@ -10,6 +10,7 @@ import (
 	"myproj.com/clmgr-coordinator/pkg/node"
 	"myproj.com/clmgr-coordinator/pkg/resource"
 	"strings"
+	"time"
 )
 
 type (
@@ -40,24 +41,7 @@ func New() Cluster {
 	}
 }
 
-// todo: clean up this code
-func (c *cluster) Start(errChan chan error) {
-	logger.Info("Starting cluster")
-
-	// creating node only with hostname
-	c.nodePool.Add(node.Node{
-		Name: GetHostname(),
-	}, true)
-
-	c.clnt = db.NewClient()
-	result, err := c.clnt.Get(ClmgrKey)
-	if err != nil {
-		logger.Error(err.Error())
-		return
-	}
-	logger.Infof("Got result %s", result)
-
-	// if config already set, not reset it
+func initConfig(c *cluster, errChan chan error) {
 	clConfig, err := c.clnt.Get(strings.Join([]string{ClmgrKey, "config"}, "/"))
 	if err != nil {
 		errChan <- err
@@ -84,8 +68,9 @@ func (c *cluster) Start(errChan chan error) {
 			errChan <- err
 		}
 	}
+}
 
-	// watching cluster config changes
+func watchConfig(c *cluster, errChan chan error) {
 	watchClusterChan := c.clnt.Watch(strings.Join([]string{ClmgrKey, "config"}, "/"))
 	go func() {
 		for r := range watchClusterChan {
@@ -101,8 +86,25 @@ func (c *cluster) Start(errChan chan error) {
 			}
 		}
 	}()
+}
 
-	// watching all node changing
+func updateAlive(errChan chan error) {
+	go func() {
+		for {
+			time.Sleep(10 * time.Second)
+			ttlclnt := db.GetTTLClient(30)
+			if ttlclnt == nil {
+				logger.Error("Can't create TTL client!")
+				errChan <- errors.New("can't create TTL client")
+			}
+			logger.Info("Updating health key")
+			ttlclnt.Set(strings.Join([]string{ClmgrKey, "nodes", GetHostname(), IsAliveKey}, "/"), "alive")
+			ttlclnt.Close()
+		}
+	}()
+}
+
+func watchNodes(c *cluster, errChan chan error) {
 	nodeList, err := c.clnt.Get(strings.Join([]string{ClmgrKey, "nodes"}, "/"))
 	if err != nil {
 		logger.Error("err: %s", err.Error())
@@ -113,7 +115,7 @@ func (c *cluster) Start(errChan chan error) {
 		n := node.Node{}
 		err = json.Unmarshal(info, &n)
 		if err != nil {
-			logger.Error("Unmarshal node error")
+			logger.Errorf("Unmarshal node error, info: %s", string(info))
 			errChan <- err
 			continue
 		}
@@ -137,6 +139,29 @@ func (c *cluster) Start(errChan chan error) {
 			}
 		}
 	}()
+}
+
+func (c *cluster) Start(errChan chan error) {
+	logger.Info("Starting cluster")
+
+	// creating node only with hostname
+	c.nodePool.Add(node.Node{
+		Name: GetHostname(),
+	}, true)
+
+	c.clnt = db.NewClient()
+
+	// if config already set, not reset it
+	initConfig(c, errChan)
+
+	// watching cluster config changes
+	watchConfig(c, errChan)
+
+	// setting update node living key
+	updateAlive(errChan)
+
+	// watching all node changing
+	watchNodes(c, errChan)
 }
 
 func (c *cluster) AddConfig(config *Config) error {

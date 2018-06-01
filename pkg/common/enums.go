@@ -1,5 +1,6 @@
 package common
 
 const (
-	ClmgrKey = "/cluster"
+	ClmgrKey   = "/cluster"
+	IsAliveKey = "is_alive"
 )

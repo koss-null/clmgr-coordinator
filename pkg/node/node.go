@@ -6,41 +6,38 @@ import (
 	"myproj.com/clmgr-coordinator/pkg/common"
 	"myproj.com/clmgr-coordinator/pkg/db"
 	"strings"
-	"time"
-	"github.com/coreos/etcd/client"
-	"regexp"
 )
 
 type NodeStatus string
 
 const (
-	ns_green NodeStatus = "green"
-	ns_yellow = "yellow"
-	ns_red = "red"
+	ns_green  NodeStatus = "green"
+	ns_yellow            = "yellow"
+	ns_red               = "red"
 )
 
 type Node struct {
-	Name   string  `json:"name"`
-	Labels []Label `json:"labels"`
-	IP     string  `json:"ip"`
-	Status NodeStatus `json:"status,omitempty"`
+	Name   string     `json:"name"`
+	Labels []Label    `json:"labels"`
+	IP     string     `json:"ip"`
+	Status NodeStatus `json:"status"`
 	client db.Client
 }
 
 /*
 	parseClusterHealth() is an inner function, which gets cluster health output
 	from ETCD, and returns an array of healthy nodes
- */
-func parseClusterHealth(resp string) (goodNodes []string) {
-	respLines := strings.Split(resp, "\n")
-	r := regexp.MustCompile("member ([a-f0-9])+ is healthy(.)+http://([0-9])+\\.([0-9])+\\.([0-9])+\\.([0-9])+")
-	var subm [][]string
-	for _, line := range respLines {
-		subm = r.FindAllStringSubmatch(line, -1)
-		goodNodes = append(goodNodes, strings.Split(subm[0][0], "http://")[1])
-	}
-	return
-}
+*/
+// func parseClusterHealth(resp string) (goodNodes []string) {
+// 	respLines := strings.Split(resp, "\n")
+// 	r := regexp.MustCompile("member ([a-f0-9])+ is healthy(.)+http://([0-9])+\\.([0-9])+\\.([0-9])+\\.([0-9])+")
+// 	var subm [][]string
+// 	for _, line := range respLines {
+// 		subm = r.FindAllStringSubmatch(line, -1)
+// 		goodNodes = append(goodNodes, strings.Split(subm[0][0], "http://")[1])
+// 	}
+// 	return
+// }
 
 func (n *Node) Watch() {
 	if n.client == nil {
@@ -61,19 +58,28 @@ func (n *Node) Watch() {
 		}
 	}()
 
-	// checking etcd state
-	exec := common.NewExecutor()
-	exec.SetOp([]string{"etcdctl", "cluster-health"})
+	// checking nodes state
+	watchNodeKeyChan := n.client.Watch(strings.Join([]string{common.ClmgrKey, "nodes", n.Name, common.IsAliveKey}, "/"))
 	go func() {
-		for {
-			time.Sleep(10 * time.Second)
-			resp, err := exec.Exec()
-			if err != nil {
-				logger.Errorf("Error during cluster-health: %s", err.Error())
-				continue
+		for r := range watchNodeKeyChan {
+			for _, e := range r.Events {
+				if e.IsModify() || e.IsCreate() {
+					continue
+				}
+				// if we are here, that means that the key was expired
+				logger.Infof("Found live key event, %+v", e)
+				n.Status = ns_red
+				data, err := json.Marshal(n)
+				if err != nil {
+					logger.Errorf("failed to marshall node into json, err: %s", err.Error())
+					continue
+				}
+				err = n.client.Set(strings.Join([]string{common.ClmgrKey, "nodes", n.Name}, "/"), string(data))
+				if err != nil {
+					logger.Errorf("failed to change node state ¡in etcd, err: %s", err.Error())
+					continue
+				}
 			}
-			healthyNodes := parseClusterHealth(resp)
-			n.client.Get()
 		}
 	}()
 }

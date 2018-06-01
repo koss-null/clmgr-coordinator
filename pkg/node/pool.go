@@ -3,10 +3,10 @@ package node
 import (
 	"encoding/json"
 	"github.com/google/logger"
+	. "myproj.com/clmgr-coordinator/pkg/common"
 	"myproj.com/clmgr-coordinator/pkg/db"
 	"strings"
 	"sync"
-	. "myproj.com/clmgr-coordinator/pkg/common"
 )
 
 type (
@@ -53,6 +53,7 @@ func (p *pool) Add(n Node, needDB bool) {
 	n.client = db.NewClient()
 	if needDB {
 		n.IP = GetIpFromETCD()
+		n.Status = ns_green
 		curNodeKey := strings.Join([]string{ClmgrKey, "nodes", GetHostname()}, "/")
 		data, err := json.Marshal(n)
 		if err != nil {
@@ -124,6 +125,9 @@ func (p *pool) Change(hostname string, data []byte) error {
 	}
 	for i := range p.nodes {
 		if p.nodes[i].Name == n.Name {
+			if n.Name == GetHostname() && n.Status == ns_red {
+				logger.Error("Somebody decided that this node is dead")
+			}
 			p.nodes[i] = n
 			break
 		}

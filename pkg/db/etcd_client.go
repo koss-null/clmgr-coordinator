@@ -12,11 +12,17 @@ import (
 type (
 	dbclient struct{}
 
+	ttlclient struct {
+		client *clientv3.Client
+		ID     clientv3.LeaseID
+	}
+
 	Client interface {
 		Set(key string, value string) error
 		Get(key string) (map[string][]byte, error)
 		Remove(key string) error
 		Watch(key string, wo ...clientv3.OpOption) clientv3.WatchChan
+		Close()
 	}
 )
 
@@ -100,4 +106,68 @@ type Response struct {
 
 func (c *dbclient) Watch(key string, wo ...clientv3.OpOption) clientv3.WatchChan {
 	return etcdClient.Watcher.Watch(context.Background(), key, wo...)
+}
+
+func (c *dbclient) Close() {
+	logger.Error("You are trying to close shared client. Please don't do it")
+}
+
+/*
+	GetTTLClient() returns custom client for careful usage =)
+	it's often used to deal with ttl
+	ATTENTION
+	This client need to be closed by yourself
+*/
+func GetTTLClient(duration int) Client {
+	client, err := clientv3.New(clientv3.Config{
+		Endpoints:   []string{etcdEndpoint},
+		DialTimeout: time.Second * time.Duration(duration),
+	})
+	if err != nil {
+		logger.Errorf("can't create custom client, err: %s", err.Error())
+		return nil
+	}
+
+	resp, err := client.Grant(context.Background(), int64(duration))
+	if err != nil {
+		logger.Errorf("can't create custom client, err: %s", err.Error())
+		return nil
+	}
+
+	return &ttlclient{
+		client,
+		resp.ID,
+	}
+}
+
+func (c *ttlclient) Set(key string, value string) error {
+	_, err := c.client.Put(context.TODO(), key, value, clientv3.WithLease(c.ID))
+	return err
+}
+
+func (c *ttlclient) Get(key string) (map[string][]byte, error) {
+	logger.Infof("Getting %s key", key)
+	resp, err := c.client.Get(context.Background(), key, clientv3.WithPrefix())
+	if err != nil {
+		return map[string][]byte{}, err
+	}
+	return KV2Map(resp.Kvs), nil
+}
+
+func (c *ttlclient) Remove(key string) error {
+	logger.Infof("Removing etcd key %s", key)
+	_, err := c.client.Delete(context.Background(), key)
+	if err != nil {
+		return err
+	}
+	logger.Infof("Remove is done")
+	return nil
+}
+
+func (c *ttlclient) Watch(key string, wo ...clientv3.OpOption) clientv3.WatchChan {
+	return c.client.Watcher.Watch(context.Background(), key, wo...)
+}
+
+func (c *ttlclient) Close() {
+	c.client.Close()
 }

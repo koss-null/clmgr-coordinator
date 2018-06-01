@@ -3,9 +3,9 @@ package common
 import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/satori/go.uuid"
-	"sync"
 	"myproj.com/clmgr-coordinator/config"
 	"strings"
+	"sync"
 )
 
 var hostname string
@@ -30,10 +30,18 @@ func KV2Map(data []*mvccpb.KeyValue) map[string][]byte {
 }
 
 func GetIpFromETCD() string {
-	// todo: think how to fix it
 	command := config.Config.HNPath
 	exec := NewExecutor()
 	exec.SetOp([]string{"/bin/bash", "-c", command})
-	res, _ := exec.Exec()
+	iter := 0
+	res := ""
+	for {
+		var err error
+		res, err = exec.Exec()
+		iter++
+		if iter > 5 || err == nil {
+			break
+		}
+	}
 	return strings.Trim(res, "\n")
 }
